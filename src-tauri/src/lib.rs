@@ -1,6 +1,6 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
-use std::{collections::HashMap, ffi::OsString, sync::{Mutex, mpsc}};
+use std::{collections::HashMap, ffi::OsString, sync::{Mutex}};
 
 use gethostname::gethostname;
 use mdns_sd::ResolvedService;
@@ -9,7 +9,8 @@ use tauri::Manager;
 
 mod commands;
 
-use commands::connect::connect;
+use commands::scan_devices::scan;
+
 
 #[derive(Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -22,7 +23,7 @@ struct AppState {
     device_name: OsString,
     connected_with: Option<ResolvedService>,
     available_devices: HashMap<String, ResolvedService>,
-    // discovery: Option<mpsc>
+    discovery: Discovery
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -35,11 +36,11 @@ pub fn run() {
                 device_name,
                 connected_with: None,
                 available_devices: HashMap::new(),
-                // discovery: None
+                discovery: Discovery::Off
             }));
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![connect])
+        .invoke_handler(tauri::generate_handler![scan])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

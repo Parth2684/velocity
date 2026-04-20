@@ -3,4 +3,4 @@
 
 pub mod send;
 mod helpers;
-pub mod connect;
+pub mod scan_devices;
