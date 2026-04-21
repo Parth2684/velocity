@@ -37,6 +37,8 @@ pub fn recv_connect (app: &tauri::AppHandle) -> Result<(), String> {
                 };
                 if !should_continue {
                     println!("stopped searching");
+                    std::thread::sleep(std::time::Duration::from_secs(1));
+                    mdns.shutdown().ok();
                     break;
                 }
                 if let Ok(event) = recv.recv() {                
