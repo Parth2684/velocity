@@ -1,13 +1,13 @@
 use std::{sync::Mutex};
 
-use mdns_sd::{ServiceDaemon, ServiceEvent};
+use mdns_sd::{ServiceEvent};
 use tauri::Manager;
 
 use crate::{AppState, Discovery};
 
 
 
-pub fn recv_connect (app: &tauri::AppHandle) -> Result<(), String> {
+pub fn recv_search (app: &tauri::AppHandle) -> Result<(), String> {
     let state = app.state::<Mutex<AppState>>();
     let mut state = match state.lock() {
         Err(err) => {
@@ -17,14 +17,8 @@ pub fn recv_connect (app: &tauri::AppHandle) -> Result<(), String> {
         Ok(state) => state
     };
     
-    let mdns = match ServiceDaemon::new() {
-        Err(err) => return Err(err.to_string()),
-        Ok(service) => {
-            service
-        }
-    };
     
-    let receiver = mdns.browse("_velocity._udp.local.");
+    let receiver = state.mdns.browse("_velocity._udp.local.");
     match receiver {
         Err(err) => return Err(err.to_string()),
         Ok(recv) => {
@@ -38,7 +32,7 @@ pub fn recv_connect (app: &tauri::AppHandle) -> Result<(), String> {
                 if !should_continue {
                     println!("stopped searching");
                     std::thread::sleep(std::time::Duration::from_secs(1));
-                    mdns.shutdown().ok();
+                    state.mdns.shutdown().ok();
                     break;
                 }
                 if let Ok(event) = recv.recv() {                

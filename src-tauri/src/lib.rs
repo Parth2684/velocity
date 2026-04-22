@@ -3,7 +3,7 @@
 use std::{collections::HashMap, ffi::OsString, sync::{Mutex}};
 
 use gethostname::gethostname;
-use mdns_sd::ResolvedService;
+use mdns_sd::{ResolvedService, ServiceDaemon};
 use serde::{self, Deserialize};
 use tauri::Manager;
 
@@ -23,7 +23,8 @@ struct AppState {
     device_name: OsString,
     connected_with: Option<ResolvedService>,
     available_devices: HashMap<String, ResolvedService>,
-    discovery: Discovery
+    discovery: Discovery,
+    mdns: ServiceDaemon
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -32,11 +33,13 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let device_name = gethostname();
+            let mdns = ServiceDaemon::new().expect("error getting mdns daemon");
             app.manage(Mutex::new(AppState {
                 device_name,
                 connected_with: None,
                 available_devices: HashMap::new(),
-                discovery: Discovery::Off
+                discovery: Discovery::Off,
+                mdns
             }));
             Ok(())
         })

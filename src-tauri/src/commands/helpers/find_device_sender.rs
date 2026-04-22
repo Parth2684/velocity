@@ -1,19 +1,13 @@
 use std::collections::HashMap;
 use std::{net::UdpSocket, sync::Mutex};
 
-use mdns_sd::{ServiceDaemon, ServiceInfo};
+use mdns_sd::{ServiceInfo};
 use tauri::{AppHandle, Manager};
 
 use crate::{AppState, Discovery};
 
+
 pub fn send_publish(app: &AppHandle, discovery: Discovery) -> Result<(), String> {
-    let mdns = match ServiceDaemon::new() {
-        Err(err) => {
-            eprintln!("error starting search service, {}", err);
-            return Err(String::from("error starting search service"));
-        }
-        Ok(service) => service,
-    };
     let state = app.state::<Mutex<AppState>>();
     let mut state = match state.lock() {
         Err(err) => {
@@ -71,12 +65,12 @@ pub fn send_publish(app: &AppHandle, discovery: Discovery) -> Result<(), String>
                 }
                 Ok(service) => service
             };
-            mdns.register(my_service).unwrap();
+            state.mdns.register(my_service).unwrap();
         }
         Discovery::Off => {
             state.discovery = Discovery::Off;
             std::thread::sleep(std::time::Duration::from_secs(1));
-            mdns.shutdown().unwrap();
+            state.mdns.shutdown().unwrap();
         }
     }
 

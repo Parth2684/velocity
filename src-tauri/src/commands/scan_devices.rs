@@ -3,7 +3,7 @@ use std::sync::Mutex;
 use serde::{Deserialize};
 use tauri::Manager;
 
-use crate::{AppState, Discovery, commands::helpers::find_device_receiver};
+use crate::{AppState, Discovery, commands::helpers::{find_device_receiver, find_device_sender}};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -14,21 +14,22 @@ pub enum UserType {
 
 
 #[tauri::command]
-pub fn scan(app: tauri::AppHandle, user_type: UserType) -> Result<(), String> {
+pub fn scan(app: tauri::AppHandle, user_type: UserType, discovery: Discovery) -> Result<(), String> {
     match user_type {
-        UserType::Sender => todo!(),
-        UserType::Receiver => {
+        UserType::Sender => {
+            find_device_sender::send_publish(&app, discovery)
+        }
+        UserType::Receiver => {           
             let state_handle = app.state::<Mutex<AppState>>();
-            let mut state = match state_handle.lock() {
-                Ok(state) => state,
+            let mut state = match state_handle.lock(){
                 Err(err) => {
-                    eprintln!("error updating state pf connection: {:?}", err);
-                    return Err(String::from("error updating connection state"));
+                    eprintln!("error getting mutable state for changing discovery mode: {}", err);
+                    return Err(String::from("Error getting mutable state for changing discovery mode"));
                 }
+                Ok(state) => state
             };
-            
-            state.discovery = Discovery::On;
-            match find_device_receiver::recv_connect(&app) {
+            state.discovery = discovery;
+            match find_device_receiver::recv_search(&app) {
                 Err(err) => {
                     let err_state = String::from("couldn't connect with the sender");
                     eprintln!("{:?}: {:?}", &err_state, &err);
@@ -39,6 +40,6 @@ pub fn scan(app: tauri::AppHandle, user_type: UserType) -> Result<(), String> {
                     Ok(())
                 }
             }
-        },
+        }
     }
 }
