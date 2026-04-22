@@ -1,11 +1,28 @@
 use std::collections::HashMap;
-use std::{net::UdpSocket, sync::Mutex};
+use std::{sync::Mutex};
 
 use mdns_sd::{ServiceInfo};
 use tauri::{AppHandle, Manager};
+use uuid::Uuid;
 
 use crate::{AppState, Discovery};
 
+fn to_host_name(name: &str) -> String {
+    let cleaned: String = name
+        .to_lowercase()
+        .chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() {
+                c
+            } else {
+                '-' // replace everything else
+            }
+        })
+        .collect();
+    let uuid = &Uuid::new_v4().to_string()[..4];
+
+    format!("{}-{}.local.", cleaned.trim_matches('-'), uuid)
+}
 
 pub fn send_publish(app: &AppHandle, discovery: Discovery) -> Result<(), String> {
     let state = app.state::<Mutex<AppState>>();
@@ -26,31 +43,10 @@ pub fn send_publish(app: &AppHandle, discovery: Discovery) -> Result<(), String>
                 }
                 Ok(str) => str
             };
-            let host_name = format!("{}.local.", &device_name);
-            let socket = match UdpSocket::bind("0.0.0.0") {
-                Err(err) => {
-                    eprintln!("error getting socket: {}", err);
-                    return Err(String::from("error getting local ip"));
-                }
-                Ok(socket) => socket
-            };
-            match socket.connect("8.8.8.8:80") {
-                Ok(_) => {}
-                Err(e) => {
-                    eprintln!("Failed to determine IP: {}", e);
-                    return Err("Please turn on the internet: Failed to determine ip".into());
-                }
-            }
-            let socket = match socket.local_addr() {
-                Err(err) => {
-                    eprintln!("error getting device ip: {}", err);
-                    return Err(String::from("error getting device ip"));
-                }
-                Ok(local) => local
-            };
-
-            let ip = socket.ip();
-            let port = socket.port();
+            let host_name = to_host_name(&device_name);
+           
+            let ip = state.socket_addr.ip();
+            let port = state.socket_addr.port();
 
             let mut properties = HashMap::new();
             properties.insert("version".to_string(), "1.0".to_string());
@@ -65,6 +61,7 @@ pub fn send_publish(app: &AppHandle, discovery: Discovery) -> Result<(), String>
                 }
                 Ok(service) => service
             };
+            dbg!(&my_service);
             state.mdns.register(my_service).unwrap();
         }
         Discovery::Off => {
