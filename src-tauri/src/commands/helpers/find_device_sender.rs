@@ -1,4 +1,7 @@
 use std::collections::HashMap;
+use std::io::Write;
+use std::net::{SocketAddr, TcpListener};
+use std::thread;
 use std::{sync::Mutex};
 
 use mdns_sd::{ServiceInfo};
@@ -24,7 +27,7 @@ fn to_host_name(name: &str) -> String {
     format!("{}-{}.local.", cleaned.trim_matches('-'), uuid)
 }
 
-pub fn send_publish(app: &AppHandle, discovery: Discovery) -> Result<(), String> {
+pub fn send_publish(app: &AppHandle, discovery: Discovery, quinn_addr: SocketAddr) -> Result<(), String> {
     let state = app.state::<Mutex<AppState>>();
     let mut state = match state.lock() {
         Err(err) => {
@@ -46,11 +49,25 @@ pub fn send_publish(app: &AppHandle, discovery: Discovery) -> Result<(), String>
             let host_name = to_host_name(&device_name);
            
             let ip = state.socket_addr.ip();
+            let tcp_ip = state.socket_addr.ip();
             let port = state.socket_addr.port();
+            
+            let cert = state.certificate.clone();
+            
+            let addr = SocketAddr::new(tcp_ip, 0000);
+            thread::spawn(move || {
+                let listner = TcpListener::bind(addr).expect("listner failed: could not share certificate");
+                for stream in listner.incoming() {
+                    let mut stream = stream.expect("error sending certificate");
+                    stream.write_all(cert.as_ref()).expect("could not send certificate");
+                }
+            });
 
             let mut properties = HashMap::new();
-            properties.insert("version".to_string(), "1.0".to_string());
-            properties.insert("service".to_string(), "file-transfer".to_string());
+            properties.insert(String::from("version"), String::from("1.0"));
+            properties.insert(String::from("service"), String::from("file-transfer"));
+            properties.insert(String::from("tcp_listner"), addr.to_string());
+            properties.insert(String::from("quinn_addr"), quinn_addr.to_string());
             
             state.discovery = Discovery::On;
 

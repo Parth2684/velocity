@@ -1,9 +1,9 @@
-use std::{net::SocketAddr, sync::{Arc, Mutex}};
+use std::{net::SocketAddr, sync::{Arc, Mutex}, thread};
 
 use quinn::{Endpoint, ServerConfig};
 use tauri::{AppHandle, Manager};
 
-use crate::AppState;
+use crate::{AppState, Discovery, commands::helpers::find_device_sender::send_publish};
 
 #[tauri::command]
 pub fn serve_and_connect_quic(app: AppHandle) -> Result<(), String> {
@@ -35,7 +35,7 @@ pub fn serve_and_connect_quic(app: AppHandle) -> Result<(), String> {
         }
         Some(config) => config,
     };
-
+    
     transport_config.max_concurrent_uni_streams(100_u32.into());
     transport_config.max_concurrent_bidi_streams(100_u32.into());
     let ip = state.socket_addr.ip();
@@ -47,6 +47,14 @@ pub fn serve_and_connect_quic(app: AppHandle) -> Result<(), String> {
         }
         Ok(endpont) => endpont
     };
+    
+    
+    let app2 = app.clone();
+    
+    thread::spawn(move || {
+        let app2 = app2;
+        send_publish(&app2, Discovery::On, socket_addr)
+    });
     
     let app = app.clone();
     

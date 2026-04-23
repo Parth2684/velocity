@@ -6,13 +6,13 @@ use gethostname::gethostname;
 use mdns_sd::{ResolvedService, ServiceDaemon};
 use quinn::Connection;
 use rcgen::generate_simple_self_signed;
-use rustls::pki_types::{CertificateDer, PrivateKeyDer};
+use rustls::pki_types::{CertificateDer, PrivateKeyDer, PrivatePkcs8KeyDer};
 use serde::{self, Deserialize};
 use tauri::Manager;
 
 mod commands;
 
-use commands::scan_devices::scan;
+use commands::{scan_devices::scan, connect_server::serve_and_connect_quic, connect_client::receive_cert_and_connect_quic};
 
 
 #[derive(Deserialize)]
@@ -25,7 +25,6 @@ enum Discovery {
 
 struct AppState {
     device_name: OsString,
-    to_connected_with: Option<ResolvedService>,
     available_devices: HashMap<String, ResolvedService>,
     discovery: Discovery,
     mdns: ServiceDaemon,
@@ -70,17 +69,16 @@ pub fn run() {
             if !cert_path.exists() || !key_path.exists() {
                 let cert = generate_simple_self_signed(vec![String::from("velocity")]).expect("could not create certificate");
                 let cert_der = CertificateDer::from(cert.cert);
-                let key_der = PrivateKeyDer::from(cert.signing_key.serialize_der());
+                let key_der = PrivateKeyDer::from(cert.signing_key);
                 fs::write(&cert_path, cert_der).expect("could not store certificate");
                 fs::write(&key_path, key_der.secret_der()).expect("could not store key");
             }
             
             let certificate = CertificateDer::from(fs::read(cert_path).expect("could not read certificate"));
-            let key = PrivateKeyDer::from(fs::read(key_path).expect("could not read key"));
+            let key = PrivateKeyDer::from(PrivatePkcs8KeyDer::from(fs::read(key_path).expect("could not read key")));
             
             app.manage(Mutex::new(AppState {
                 device_name,
-                to_connected_with: None,
                 available_devices: HashMap::new(),
                 discovery: Discovery::Off,
                 mdns,
@@ -91,7 +89,7 @@ pub fn run() {
             }));
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![scan])
+        .invoke_handler(tauri::generate_handler![scan, serve_and_connect_quic, receive_cert_and_connect_quic])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

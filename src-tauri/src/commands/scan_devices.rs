@@ -1,4 +1,4 @@
-use std::sync::Mutex;
+use std::{net::{IpAddr, Ipv4Addr, SocketAddr}, str::FromStr, sync::Mutex};
 
 use serde::{Deserialize};
 use tauri::Manager;
@@ -17,7 +17,7 @@ pub enum UserType {
 pub fn scan(app: tauri::AppHandle, user_type: UserType, discovery: Discovery) -> Result<(), String> {
     match user_type {
         UserType::Sender => {
-            find_device_sender::send_publish(&app, discovery)
+           find_device_sender::send_publish(&app, Discovery::Off, SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080))
         }
         UserType::Receiver => {           
             let state_handle = app.state::<Mutex<AppState>>();
