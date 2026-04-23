@@ -64,8 +64,6 @@ pub fn send_publish(app: &AppHandle, discovery: Discovery, quinn_addr: SocketAdd
             });
 
             let mut properties = HashMap::new();
-            properties.insert(String::from("version"), String::from("1.0"));
-            properties.insert(String::from("service"), String::from("file-transfer"));
             properties.insert(String::from("tcp_listner"), addr.to_string());
             properties.insert(String::from("quinn_addr"), quinn_addr.to_string());
             

@@ -1,6 +1,5 @@
 use std::{collections::HashMap, io::Read, net::{SocketAddr, TcpStream}, sync::{Arc, Mutex}};
 
-use mdns_sd::ResolvedService;
 use quinn::{ClientConfig, Endpoint};
 use rustls::pki_types::CertificateDer;
 use tauri::{AppHandle, Manager};
@@ -9,16 +8,8 @@ use crate::AppState;
 
 
 #[tauri::command]
-pub async fn receive_cert_and_connect_quic(app: AppHandle, to_connect_with: ResolvedService) -> Result<(), String> {
-    let properties: HashMap<String, String> = to_connect_with.txt_properties
-            .iter()
-            .map(|prop| {
-                    (
-                        prop.key().to_string(),
-                        prop.val_str().to_owned(),
-                    )
-                })
-            .collect();
+pub async fn receive_cert_and_connect_quic(app: AppHandle, txt_properties: HashMap<String, String>) -> Result<(), String> {
+    let properties: HashMap<String, String> = txt_properties;
     let tcp_listner = match properties.get("tcp_listner") {
         None => return Err(String::from("could not get tcp listner")),
         Some(addr) => addr
