@@ -1,22 +1,14 @@
 use std::{
-    net::{IpAddr, Ipv4Addr, SocketAddr},
     sync::Mutex,
 };
 
-use serde::Deserialize;
 use tauri::Manager;
 
 use crate::{
-    commands::helpers::{find_device_receiver, find_device_sender},
+    commands::helpers::{find_device_receiver},
     AppState, Discovery,
 };
 
-#[derive(Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum UserType {
-    Sender,
-    Receiver,
-}
 
 #[tauri::command]
 pub fn scan(

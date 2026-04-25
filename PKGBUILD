@@ -10,7 +10,7 @@ depends=(
   'libappindicator'
 )
 
-source=("velocity::file://$(pwd)/src-tauri/target/release/velocity")
+source=("velocity::file://$(pwd)/src-tauri/target/release/Velocity")
 
 sha256sums=('SKIP')
 

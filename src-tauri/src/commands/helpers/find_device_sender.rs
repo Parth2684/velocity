@@ -54,17 +54,11 @@ pub fn send_publish(app: &AppHandle, discovery: Discovery, quinn_addr: SocketAdd
             
             let cert = state.certificate.clone();
             
-            let addr = SocketAddr::new(tcp_ip, 0000);
+            let addr = SocketAddr::new(tcp_ip, 0);
             let otp = Uuid::new_v4().to_string()[0..4].to_string();
-            // let otp_clone = otp.clone();
-            match app.emit("connect_otp", otp.clone()) {
-                Ok(_) => (),
-                Err(err) => {
-                    eprintln!("error showing otp to user: {}", err);
-                    panic!("error showing otp to you");
-                }
-            };
-            let handle = thread::spawn(move || {
+            let otp_clone = otp.clone();
+            
+            thread::spawn(move || {
                 let listner = TcpListener::bind(addr).expect("listner failed: could not share certificate");
                 for stream in listner.incoming() {
                     let mut stream = stream.expect("error sending certificate");
@@ -77,15 +71,23 @@ pub fn send_publish(app: &AppHandle, discovery: Discovery, quinn_addr: SocketAdd
                         Ok(size) => size
                     };
                     let incoming_otp = String::from_utf8_lossy(&buffer[..n]).trim().to_string();
-                    if incoming_otp == otp {
+                    if incoming_otp == otp_clone {
                         stream.write_all(cert.as_ref()).expect("could not send certificate");
-                        return;
+                        break;
                     }else {
-                        continue;
+                        let _ = stream.write_all(b"INVALID OTP");
                     }
                 }
             });
-
+            
+            match app.emit("connect_otp", otp) {
+                Ok(_) => (),
+                Err(err) => {
+                    eprintln!("error showing otp to user: {}", err);
+                    panic!("error showing otp to you");
+                }
+            };
+            
             let mut properties = HashMap::new();
             properties.insert(String::from("tcp_listner"), addr.to_string());
             properties.insert(String::from("quinn_addr"), quinn_addr.to_string());
@@ -101,7 +103,7 @@ pub fn send_publish(app: &AppHandle, discovery: Discovery, quinn_addr: SocketAdd
             };
             dbg!(&my_service);
             state.mdns.register(my_service).unwrap();
-            handle.join().expect("error starting certificate sharing server");
+            // handle.join().expect("error starting certificate sharing server");
         }
         Discovery::Off => {
             state.discovery = Discovery::Off;

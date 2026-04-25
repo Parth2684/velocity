@@ -1,11 +1,7 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
 use std::{
-    collections::{HashMap},
-    ffi::OsString,
-    fs,
-    net::{SocketAddr, UdpSocket},
-    sync::Mutex,
+    collections::HashMap, ffi::OsString, fs, net::{IpAddr, SocketAddr, UdpSocket}, str::FromStr, sync::Mutex
 };
 
 use gethostname::gethostname;
@@ -58,7 +54,7 @@ pub fn run() {
         .setup(|app| {
             let device_name = gethostname();
             let mdns = ServiceDaemon::new().expect("error getting mdns daemon");
-            let socket = match UdpSocket::bind("0.0.0.0") {
+            let socket = match UdpSocket::bind(SocketAddr::new(IpAddr::from_str("0.0.0.0").expect("error parsing ip"), 0)) {
                 Err(err) => {
                     eprintln!("error getting socket: {}", err);
                     panic!("error getting local ip");
@@ -81,7 +77,7 @@ pub fn run() {
             };
             let local_data_dir = app
                 .path()
-                .local_data_dir()
+                .app_local_data_dir()
                 .expect("local data dir not created");
             let cert_path = local_data_dir.join("cert.der");
             let key_path = local_data_dir.join("key.der");

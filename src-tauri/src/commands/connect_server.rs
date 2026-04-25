@@ -39,7 +39,7 @@ pub fn serve_and_connect_quic(app: AppHandle) -> Result<(), String> {
     transport_config.max_concurrent_uni_streams(100_u32.into());
     transport_config.max_concurrent_bidi_streams(100_u32.into());
     let ip = state.socket_addr.ip();
-    let socket_addr = SocketAddr::new(ip, 0000);
+    let socket_addr = SocketAddr::new(ip, 0);
     let endpoint = match Endpoint::server(server_config, socket_addr) {
         Err(err) => {
             eprintln!("error making endpoint for quic: {}", err);

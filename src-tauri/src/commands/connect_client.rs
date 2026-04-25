@@ -36,6 +36,22 @@ pub async fn receive_cert_and_connect_quic(app: AppHandle, txt_properties: HashM
     };
     stream.write_all(otp.as_bytes()).expect("failed to send otp");
     
+    let mut header = [0u8; 3];
+    
+    let n = match stream.read(&mut header) {
+        Err(err) => {
+            eprintln!("error reading response: {}", err);
+            return Err(String::from("error reading response"));
+        }
+        Ok(n) => n
+    };
+    
+    let header_str = String::from_utf8_lossy(&header[..n]);
+    
+    if header_str == "ERR" {
+        return Err(String::from("Invalid OTP"));
+    }
+    
     let mut cert_bytes = Vec::new();
     match stream.read_to_end(&mut cert_bytes){
         Err(err) => {
@@ -44,6 +60,7 @@ pub async fn receive_cert_and_connect_quic(app: AppHandle, txt_properties: HashM
         }
         Ok(_) => ()
     };
+    
     let mut cert = rustls::RootCertStore::empty();
     
     match cert.add(CertificateDer::from(cert_bytes)) {
