@@ -1,11 +1,11 @@
 use std::collections::HashMap;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpListener};
 use std::thread;
 use std::{sync::Mutex};
 
 use mdns_sd::{ServiceInfo};
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 use uuid::Uuid;
 
 use crate::{AppState, Discovery};
@@ -55,11 +55,34 @@ pub fn send_publish(app: &AppHandle, discovery: Discovery, quinn_addr: SocketAdd
             let cert = state.certificate.clone();
             
             let addr = SocketAddr::new(tcp_ip, 0000);
-            thread::spawn(move || {
+            let otp = Uuid::new_v4().to_string()[0..4].to_string();
+            // let otp_clone = otp.clone();
+            match app.emit("connect_otp", otp.clone()) {
+                Ok(_) => (),
+                Err(err) => {
+                    eprintln!("error showing otp to user: {}", err);
+                    panic!("error showing otp to you");
+                }
+            };
+            let handle = thread::spawn(move || {
                 let listner = TcpListener::bind(addr).expect("listner failed: could not share certificate");
                 for stream in listner.incoming() {
                     let mut stream = stream.expect("error sending certificate");
-                    stream.write_all(cert.as_ref()).expect("could not send certificate");
+                    let mut buffer = [0u8; 16];
+                    let n = match stream.read(&mut buffer) {
+                        Err(err) => {
+                            eprintln!("error getting otp: {}", err);
+                            continue;
+                        }
+                        Ok(size) => size
+                    };
+                    let incoming_otp = String::from_utf8_lossy(&buffer[..n]).trim().to_string();
+                    if incoming_otp == otp {
+                        stream.write_all(cert.as_ref()).expect("could not send certificate");
+                        return;
+                    }else {
+                        continue;
+                    }
                 }
             });
 
@@ -78,6 +101,7 @@ pub fn send_publish(app: &AppHandle, discovery: Discovery, quinn_addr: SocketAdd
             };
             dbg!(&my_service);
             state.mdns.register(my_service).unwrap();
+            handle.join().expect("error starting certificate sharing server");
         }
         Discovery::Off => {
             state.discovery = Discovery::Off;

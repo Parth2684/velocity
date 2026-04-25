@@ -5,6 +5,7 @@ use tauri::{Emitter, Manager};
 
 use crate::{AppState, AvailableDevice, Discovery};
 
+
 pub fn recv_search(app: &tauri::AppHandle) -> Result<(), String> {
     let state = app.state::<Mutex<AppState>>();
     let mut state = match state.lock() {

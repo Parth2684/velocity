@@ -1,4 +1,4 @@
-use std::{collections::HashMap, io::Read, net::{SocketAddr, TcpStream}, sync::{Arc, Mutex}};
+use std::{collections::HashMap, io::{Read, Write}, net::{SocketAddr, TcpStream}, sync::{Arc, Mutex}};
 
 use quinn::{ClientConfig, Endpoint};
 use rustls::pki_types::CertificateDer;
@@ -8,7 +8,7 @@ use crate::AppState;
 
 
 #[tauri::command]
-pub async fn receive_cert_and_connect_quic(app: AppHandle, txt_properties: HashMap<String, String>) -> Result<(), String> {
+pub async fn receive_cert_and_connect_quic(app: AppHandle, txt_properties: HashMap<String, String>, otp: String) -> Result<(), String> {
     let properties: HashMap<String, String> = txt_properties;
     let tcp_listner = match properties.get("tcp_listner") {
         None => return Err(String::from("could not get tcp listner")),
@@ -34,6 +34,7 @@ pub async fn receive_cert_and_connect_quic(app: AppHandle, txt_properties: HashM
         }
         Ok(stream) => stream
     };
+    stream.write_all(otp.as_bytes()).expect("failed to send otp");
     
     let mut cert_bytes = Vec::new();
     match stream.read_to_end(&mut cert_bytes){
