@@ -8,7 +8,7 @@ use crate::{AppState, AvailableDevice, Discovery};
 
 pub fn recv_search(app: &tauri::AppHandle) -> Result<(), String> {
     let state = app.state::<Mutex<AppState>>();
-    let mut state = match state.lock() {
+    let state = match state.lock() {
         Err(err) => {
             eprintln!("error getting mutable state: {:?}", err);
             return Err(String::from("error getting mutable state"));
@@ -21,6 +21,15 @@ pub fn recv_search(app: &tauri::AppHandle) -> Result<(), String> {
         Err(err) => return Err(err.to_string()),
         Ok(recv) => {
             loop {
+                let state = app.state::<Mutex<AppState>>();
+                let mut state = match state.lock() {
+                    Err(err) => {
+                        eprintln!("error getting mutable state: {:?}", err);
+                        return Err(String::from("error getting mutable state"));
+                    }
+                    Ok(state) => state,
+                };
+
                 let should_continue = {
                     match state.discovery {
                         Discovery::Off => false,

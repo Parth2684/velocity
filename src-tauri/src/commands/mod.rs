@@ -6,3 +6,5 @@ mod helpers;
 pub mod scan_devices;
 pub mod connect_client;
 pub mod connect_server;
+pub mod receive;
+pub mod cancel_transfer;

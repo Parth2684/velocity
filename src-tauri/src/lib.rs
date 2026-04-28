@@ -17,7 +17,7 @@ mod commands;
 
 use commands::{
     connect_client::receive_cert_and_connect_quic, connect_server::serve_and_connect_quic,
-    scan_devices::scan, send::send_file
+    scan_devices::scan, send::send_file, cancel_transfer::cancel_transfer_file
 };
 
 #[derive(Deserialize)]
@@ -149,7 +149,8 @@ pub fn run() {
             scan,
             serve_and_connect_quic,
             receive_cert_and_connect_quic,
-            send_file
+            send_file,
+            cancel_transfer_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

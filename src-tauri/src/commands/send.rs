@@ -23,7 +23,7 @@ fn matcher_to_string(matcher_type: MatcherType) -> CustomMatcherType {
     }
 }
 
-const BUFFER_SIZE: usize = 1024 * 1024 * 50;
+const BUFFER_SIZE: usize = 1024 * 1024 * 16;
 
 
 #[tauri::command]

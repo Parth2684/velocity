@@ -8,7 +8,7 @@
     "devUrl": "http://localhost:1420",
     "beforeBuildCommand": "bun run build",
     "frontendDist": "../dist",
-    "beforeBundleCommand": "strip --strip-unneeded src-tauri/target/release/velocity",
+    "beforeBundleCommand": "strip --strip-unneeded src-tauri/target/release/Velocity",
     "removeUnusedCommands": true
   },
   "app": {
@@ -24,6 +24,10 @@
     }
   },
   "bundle": {
+    "android": {
+     	"autoIncrementVersionCode": false,
+     	"minSdkVersion": 24
+    },
     "active": true,
     "targets": "all",
     "icon": [
