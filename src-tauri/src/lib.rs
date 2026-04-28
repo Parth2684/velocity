@@ -1,9 +1,10 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
 use std::{
-    collections::HashMap, ffi::OsString, fs, net::{IpAddr, SocketAddr, UdpSocket}, str::FromStr, sync::Mutex
+    collections::HashMap, ffi::OsString, fs, net::{IpAddr, SocketAddr, UdpSocket}, path::PathBuf, str::FromStr, sync::Mutex
 };
 
+use bincode::Encode;
 use gethostname::gethostname;
 use mdns_sd::{ServiceDaemon};
 use quinn::Connection;
@@ -16,7 +17,7 @@ mod commands;
 
 use commands::{
     connect_client::receive_cert_and_connect_quic, connect_server::serve_and_connect_quic,
-    scan_devices::scan,
+    scan_devices::scan, send::send_file
 };
 
 #[derive(Deserialize)]
@@ -36,6 +37,29 @@ struct AvailableDevice {
     txt_properties: HashMap<String, String>,
 }
 
+#[derive(Serialize, Deserialize, Encode, Clone)]
+#[serde(rename_all="camelCase")]
+enum CustomMatcherType {
+    App,
+    Archive,
+    Audio,
+    Book,
+    Custom,
+    Doc,
+    Font,
+    Image,
+    Text,
+    Video
+}
+
+#[derive(Serialize, Deserialize, Encode, Clone)]
+struct Metadata {
+    path: PathBuf,
+    name: String,
+    data_type: CustomMatcherType,
+    file_size: u64
+}
+
 struct AppState {
     device_name: OsString,
     available_devices: HashMap<String, AvailableDevice>,
@@ -45,7 +69,10 @@ struct AppState {
     certificate: CertificateDer<'static>,
     key: PrivateKeyDer<'static>,
     connected_to: Option<Connection>,
+    to_send: HashMap<PathBuf, Metadata>
 }
+
+
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -78,7 +105,15 @@ pub fn run() {
             let local_data_dir = app
                 .path()
                 .app_local_data_dir()
-                .expect("local data dir not created");
+                .expect("local data dir not accessible");
+            
+            let transfer_dir = app.path().download_dir().expect("Download Directory not accessible").join("Velocity");
+            
+            if !transfer_dir.exists() {
+                fs::create_dir_all(transfer_dir).expect("could not create Directory: Please create a folder named Velocity inside Downloads folder");
+            }
+            
+            
             let cert_path = local_data_dir.join("cert.der");
             let key_path = local_data_dir.join("key.der");
 
@@ -96,7 +131,7 @@ pub fn run() {
             let key = PrivateKeyDer::from(PrivatePkcs8KeyDer::from(
                 fs::read(key_path).expect("could not read key"),
             ));
-
+            
             app.manage(Mutex::new(AppState {
                 device_name,
                 available_devices: HashMap::new(),
@@ -106,13 +141,15 @@ pub fn run() {
                 certificate,
                 key,
                 connected_to: None,
+                to_send: HashMap::new(),
             }));
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             scan,
             serve_and_connect_quic,
-            receive_cert_and_connect_quic
+            receive_cert_and_connect_quic,
+            send_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
