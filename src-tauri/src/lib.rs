@@ -4,7 +4,7 @@ use std::{
     collections::HashMap, ffi::OsString, fs, net::{IpAddr, SocketAddr, UdpSocket}, path::PathBuf, str::FromStr, sync::Mutex
 };
 
-use bincode::Encode;
+use bincode::{Decode, Encode};
 use gethostname::gethostname;
 use mdns_sd::{ServiceDaemon};
 use quinn::Connection;
@@ -12,12 +12,13 @@ use rcgen::generate_simple_self_signed;
 use rustls::pki_types::{CertificateDer, PrivateKeyDer, PrivatePkcs8KeyDer};
 use serde::{self, Deserialize, Serialize};
 use tauri::Manager;
+use strum::Display;
 
 mod commands;
 
 use commands::{
     connect_client::receive_cert_and_connect_quic, connect_server::serve_and_connect_quic,
-    scan_devices::scan, send::send_file, cancel_transfer::cancel_transfer_file
+    scan_devices::scan, send::send_file, cancel_transfer::cancel_transfer_file, receive::receive_file
 };
 
 #[derive(Deserialize)]
@@ -37,7 +38,7 @@ struct AvailableDevice {
     txt_properties: HashMap<String, String>,
 }
 
-#[derive(Serialize, Deserialize, Encode, Clone)]
+#[derive(Serialize, Deserialize, Encode, Clone, Decode, Display)]
 #[serde(rename_all="camelCase")]
 enum CustomMatcherType {
     App,
@@ -52,7 +53,7 @@ enum CustomMatcherType {
     Video
 }
 
-#[derive(Serialize, Deserialize, Encode, Clone)]
+#[derive(Serialize, Deserialize, Encode, Clone, Decode)]
 struct Metadata {
     path: PathBuf,
     name: String,
@@ -69,7 +70,8 @@ struct AppState {
     certificate: CertificateDer<'static>,
     key: PrivateKeyDer<'static>,
     connected_to: Option<Connection>,
-    to_send: HashMap<PathBuf, Metadata>
+    to_send: HashMap<PathBuf, Metadata>,
+    transfer_dir: PathBuf
 }
 
 
@@ -107,10 +109,10 @@ pub fn run() {
                 .app_local_data_dir()
                 .expect("local data dir not accessible");
             
-            let transfer_dir = app.path().download_dir().expect("Download Directory not accessible").join("Velocity");
+            let transfer_dir = app.path().home_dir().expect("Could not find home dir").join("Velocity");
             
             if !transfer_dir.exists() {
-                fs::create_dir_all(transfer_dir).expect("could not create Directory: Please create a folder named Velocity inside Downloads folder");
+                fs::create_dir_all(&transfer_dir).expect("could not create Directory: Please create a folder named Velocity in $HOME directory");
             }
             
             
@@ -142,6 +144,7 @@ pub fn run() {
                 key,
                 connected_to: None,
                 to_send: HashMap::new(),
+                transfer_dir
             }));
             Ok(())
         })
@@ -150,7 +153,8 @@ pub fn run() {
             serve_and_connect_quic,
             receive_cert_and_connect_quic,
             send_file,
-            cancel_transfer_file
+            cancel_transfer_file,
+            receive_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

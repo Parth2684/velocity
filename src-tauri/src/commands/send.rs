@@ -23,7 +23,7 @@ fn matcher_to_string(matcher_type: MatcherType) -> CustomMatcherType {
     }
 }
 
-const BUFFER_SIZE: usize = 1024 * 1024 * 16;
+pub const BUFFER_SIZE: usize = 1024 * 1024 * 16;
 
 
 #[tauri::command]
@@ -179,7 +179,7 @@ pub async fn send_file(app: AppHandle, paths: HashSet<String>) -> Result<(), Str
             let progress = (sent as f64 / total as f64) * 100.0;
             if let Err(err) = app.emit("progress", serde_json::json!({
                 "path": data.0,
-                "sent": sent,
+                "transferred": sent,
                 "progress": progress
             })) {
                 eprintln!("error sending progress to client: {}", err);
