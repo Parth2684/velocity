@@ -5,7 +5,7 @@ import { AvailableDevice } from './stores/types';
 
 export const setupListeners = async () => {
   const unlisteners: (() => void)[] = [];
-  const { addAvailableDevice, removeAvailableDevice } = store()
+  const { addAvailableDevice, removeAvailableDevice, setOtp } = store()
   const unlistenAddAvailableDevice = await listen<AvailableDevice>("add_available_device", (data) => {
     addAvailableDevice(data.payload)
   });
@@ -16,5 +16,13 @@ export const setupListeners = async () => {
   })
   unlisteners.push(unlistenRemoveAvailableDevice)
   
+  const unlistenOtp = await listen<string>("connect_otp", (otp) => {
+    setOtp(otp.payload)
+  })
+  unlisteners.push(unlistenOtp)
   
+  
+  return () => {
+    unlisteners.forEach((fn) => fn())
+  }
 }

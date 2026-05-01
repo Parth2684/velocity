@@ -39,6 +39,7 @@ export interface Metadata {
 export type StoreState = {
   availableDevices: Map<string, AvailableDevice>;
   files: Map<string, Metadata>
+  otp: string | null
 }
 
 export type StoreAction = {
@@ -47,4 +48,5 @@ export type StoreAction = {
   receiveCertAndConnectQuic: (txt_properties: Map<string, string>, otp: string) => Promise<void>;
   addAvailableDevice: (data: AvailableDevice) => void
   removeAvailableDevice: (name: string) => void
+  setOtp: (otp: string) => void
 }

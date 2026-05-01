@@ -8,6 +8,7 @@ import { invoke } from '@tauri-apps/api/core';
 export const store = create<StoreState & StoreAction>((set, get) => ({
   availableDevices: new Map,
   files: new Map(),
+  otp: null,
   
   serveAndConnectQuic: async () => {
     try {
@@ -45,5 +46,8 @@ export const store = create<StoreState & StoreAction>((set, get) => ({
     const beforeDelete = new Map(get().availableDevices);
     beforeDelete.delete(name)
     set({ availableDevices: beforeDelete })
+  },
+  setOtp: (otp) => {
+    set({ otp })
   }
 }))

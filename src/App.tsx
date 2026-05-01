@@ -4,9 +4,21 @@ import { Route } from 'react-router';
 import Home from './pages/Home';
 import Sender from './pages/Sender';
 import Receiver from './pages/Receiver';
+import { useEffect } from 'react';
+import { setupListeners } from './listners';
 
 function App() {
-  
+  useEffect(() => {
+    let cleanup: () => void;
+    
+    setupListeners().then((fn) => {
+      cleanup = fn
+    })
+    
+    return () => {
+      if (cleanup) cleanup()
+    }
+  }, [])
 
   return (
     
