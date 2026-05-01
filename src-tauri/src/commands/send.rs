@@ -159,7 +159,7 @@ pub async fn send_file(app: AppHandle, paths: HashSet<String>) -> Result<(), Str
                 })?;
                 break; 
             }
-            send_stream.write_all(&data.1.file_size.to_be_bytes()).await.map_err(|err| {
+            send_stream.write_all(&1u64.to_be_bytes()).await.map_err(|err| {
                 eprintln!("error sending file confirmation: {}", err);
                 String::from("Error sending file")
             })?;
@@ -186,6 +186,10 @@ pub async fn send_file(app: AppHandle, paths: HashSet<String>) -> Result<(), Str
             };
         }
     }
-    
+    send_stream.finish().map_err(|err| {
+        eprintln!("error closing stream:{}", err);
+        String::from("Error Closing Send Stream")
+    })?;
+    connection.closed().await;   
     Ok(())
 }

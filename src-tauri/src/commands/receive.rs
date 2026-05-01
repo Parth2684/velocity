@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs::{self, File}, io::Write, path::PathBuf, sync::Mutex};
+use std::{collections::HashMap, fs::{self, File}, io::Write, path::PathBuf, sync::Mutex, time::Instant};
 
 use bincode::config;
 use tauri::{AppHandle, Emitter, Manager};
@@ -28,6 +28,7 @@ pub async fn receive_file (app: AppHandle) -> Result<(), String> {
         eprintln!("error getting receive stream:{}", err);
         String::from("Error getting receive stream")
     })?;
+    
     let mut len_buff = [0u8; 8];
     if let Err(err) = recv_stream.read_exact(&mut len_buff).await {
         eprintln!("error receiving size of the metadata:{}", err);
@@ -104,13 +105,17 @@ pub async fn receive_file (app: AppHandle) -> Result<(), String> {
         let file_size = data.1.file_size;
         let mut remaining = u64::from_be_bytes(len_buff);
         let mut buffer = vec![0u8; BUFFER_SIZE];
+        let start = Instant::now();
+        let mut last_update = Instant::now();
+        let mut last_bytes = 0u64;
+       
         while remaining > 0 {
-            let mut size_buf = [0u8; 1];
-            recv_stream.read(&mut size_buf).await.map_err(|err| {
+            let mut size_buf = [0u8; 4];
+            recv_stream.read_exact(&mut size_buf).await.map_err(|err| {
                 eprintln!("error getting confirmattion from sender: {}", err);
                 String::from("error getting confirmation from sender")
             })?;
-            let to_continue = u8::from_be_bytes(size_buf); 
+            let to_continue = u32::from_be_bytes(size_buf); 
             
             if to_continue == 0 {
                 app.emit("stopped", data.clone()).ok();
@@ -133,18 +138,36 @@ pub async fn receive_file (app: AppHandle) -> Result<(), String> {
                     })?;
                     remaining -= num as u64;
                     received += num as u64;
-                    let progress = (received as f64 / file_size as f64) * 100.0;
-                    if let Err(err) = app.emit("progress", serde_json::json!({
-                        "path": data.0,
-                        "transferred": received,
-                        "progress": progress
-                    })) {
-                        eprintln!("could not give out the progress: {}", err)
-                    };
+                    if last_update.elapsed().as_secs() > 1 {
+                        let elapsed = last_update.elapsed().as_secs_f64();
+                        let bytes_diff = received - last_bytes;
+                    
+                        let speed = bytes_diff as f64 / elapsed; 
+                    
+                        let speed_mbps: f64 = ((speed / (1024.0 * 1024.0)) * 100.0).round() / 100.0; 
+                    
+                        let progress = (received as f64 / file_size as f64) * 100.0;
+                    
+                        app.emit("progress", serde_json::json!({
+                            "path": data.0,
+                            "transferred": received,
+                            "progress": progress,
+                            "speed_mbps": speed_mbps
+                        })).ok();
+                    
+                        last_update = Instant::now();
+                        last_bytes = received;
+                    }
                 }
-            }
-            
+            } 
         }
+        let completed_in = start.elapsed().as_secs_f32();
+        app.emit("file_transferred", serde_json::json!({
+            "path": data.0,
+            "completed_in": completed_in
+        })).ok();
     }
+    
+    connection_clone.close(0u32.into(), b"done");
     Ok(())
 }
