@@ -42,4 +42,5 @@ sqlx = { version = "0.8.6", features = ["sqlite"] }
 infer = "0.19.0"
 bincode = "2.0.0"
 strum = { version = "0.28.0", features = ["derive"] }
+tauri-plugin-dialog = "2"
 

@@ -1,24 +1,31 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
 use std::{
-    collections::HashMap, ffi::OsString, fs, net::{IpAddr, SocketAddr, UdpSocket}, path::PathBuf, str::FromStr, sync::Mutex
+    collections::HashMap,
+    ffi::OsString,
+    fs,
+    net::{IpAddr, SocketAddr, UdpSocket},
+    path::PathBuf,
+    str::FromStr,
+    sync::Mutex,
 };
 
 use bincode::{Decode, Encode};
 use gethostname::gethostname;
-use mdns_sd::{ServiceDaemon};
+use mdns_sd::ServiceDaemon;
 use quinn::Connection;
 use rcgen::generate_simple_self_signed;
 use rustls::pki_types::{CertificateDer, PrivateKeyDer, PrivatePkcs8KeyDer};
 use serde::{self, Deserialize, Serialize};
-use tauri::Manager;
 use strum::Display;
+use tauri::Manager;
 
 mod commands;
 
 use commands::{
-    connect_client::receive_cert_and_connect_quic, connect_server::serve_and_connect_quic,
-    scan_devices::scan, send::send_file, cancel_transfer::cancel_transfer_file, receive::receive_file
+    cancel_transfer::cancel_transfer_file, connect_client::receive_cert_and_connect_quic,
+    connect_server::serve_and_connect_quic, receive::receive_file, scan_devices::scan,
+    send::send_file,
 };
 
 #[derive(Deserialize)]
@@ -39,7 +46,7 @@ struct AvailableDevice {
 }
 
 #[derive(Serialize, Deserialize, Encode, Clone, Decode, Display)]
-#[serde(rename_all="camelCase")]
+#[serde(rename_all = "camelCase")]
 enum CustomMatcherType {
     App,
     Archive,
@@ -50,7 +57,7 @@ enum CustomMatcherType {
     Font,
     Image,
     Text,
-    Video
+    Video,
 }
 
 #[derive(Serialize, Deserialize, Encode, Clone, Decode)]
@@ -58,7 +65,7 @@ struct Metadata {
     path: PathBuf,
     name: String,
     data_type: CustomMatcherType,
-    file_size: u64
+    file_size: u64,
 }
 
 struct AppState {
@@ -71,14 +78,13 @@ struct AppState {
     key: PrivateKeyDer<'static>,
     connected_to: Option<Connection>,
     to_send: HashMap<PathBuf, Metadata>,
-    transfer_dir: PathBuf
+    transfer_dir: PathBuf,
 }
-
-
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let device_name = gethostname();

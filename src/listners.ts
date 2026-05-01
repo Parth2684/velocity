@@ -15,4 +15,6 @@ export const setupListeners = async () => {
     removeAvailableDevice(name.payload);
   })
   unlisteners.push(unlistenRemoveAvailableDevice)
+  
+  
 }

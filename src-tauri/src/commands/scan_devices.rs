@@ -1,20 +1,11 @@
-use std::{
-    sync::Mutex,
-};
+use std::sync::Mutex;
 
 use tauri::Manager;
 
-use crate::{
-    commands::helpers::{find_device_receiver},
-    AppState, Discovery,
-};
-
+use crate::{commands::helpers::find_device_receiver, AppState, Discovery};
 
 #[tauri::command]
-pub fn scan(
-    app: tauri::AppHandle,
-    discovery: Discovery,
-) -> Result<(), String> {
+pub fn scan(app: tauri::AppHandle, discovery: Discovery) -> Result<(), String> {
     let state_handle = app.state::<Mutex<AppState>>();
     let mut state = match state_handle.lock() {
         Err(err) => {
