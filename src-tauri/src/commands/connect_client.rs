@@ -8,6 +8,7 @@ use std::{
 use quinn::{ClientConfig, Endpoint};
 use rustls::pki_types::CertificateDer;
 use tauri::{AppHandle, Manager};
+use tokio::io::AsyncReadExt;
 
 use crate::AppState;
 
@@ -115,14 +116,23 @@ pub async fn receive_cert_and_connect_quic(
                 }
                 Ok(con) => {
                     let state = app.state::<Mutex<AppState>>();
-                    let mut state = match state.lock() {
-                        Err(err) => {
-                            eprintln!("error getting mutable state while establishing connection with sender: {}", err);
-                            return Err(String::from("Error getting mutable state while establishing connection with sender"));
-                        }
-                        Ok(state) => state,
+                    let device_name = {
+                        let mut state = match state.lock() {
+                            Err(err) => {
+                                eprintln!("error getting mutable state while establishing connection with sender: {}", err);
+                                return Err(String::from("Error getting mutable state while establishing connection with sender"));
+                            }
+                            Ok(state) => state,
+                        };
+                        state.connected_to = Some(con.clone());
+                        state.device_name.clone()
                     };
-                    state.connected_to = Some(con);
+                    let (mut send, mut recv) = con.accept_bi().await.expect("error accepting bi stream");
+                    let mut sender_name = String::new();
+                    recv.read_to_string(&mut sender_name).await.expect("error getting sender's name");
+                    send.write_all(device_name.as_encoded_bytes()).await.expect("error sending your name to sender");
+                    send.finish().ok();
+                    con.close(0u8.into(),b"done");
                     Ok(())
                 }
             }
