@@ -162,7 +162,7 @@ pub async fn receive_file(app: AppHandle) -> Result<(), String> {
                                 "path": data.0,
                                 "transferred": received,
                                 "progress": progress,
-                                "speed_mbps": speed_mbps
+                                "speed": speed_mbps
                             }),
                         )
                         .ok();

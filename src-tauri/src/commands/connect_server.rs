@@ -52,30 +52,32 @@ pub fn serve_and_connect_quic(app: AppHandle) -> Result<(), String> {
         Ok(endpont) => endpont,
     };
 
+    let app = app.clone();
     let app2 = app.clone();
+
+    tokio::spawn(async move {
+        while let Some(incoming_conn) = endpoint.accept().await {
+            let app = app.clone();
+    
+            tokio::spawn(async move {
+                match incoming_conn.await {
+                    Err(err) => {
+                        eprintln!("error accepting connection: {}", err);
+                    }
+                    Ok(con) => {
+                        let state = app.state::<Mutex<AppState>>();
+                        let mut state = state.lock().expect("error getting mutable state to store connected to");
+                        state.connected_to = Some(con);
+                    }
+                }
+            });
+        }
+    });
 
     thread::spawn(move || {
         let app2 = app2;
         send_publish(&app2, Discovery::On, socket_addr)
     });
 
-    let app = app.clone();
-
-    tokio::spawn(async move {
-        if let Some(incoming_conn) = endpoint.accept().await {
-            match incoming_conn.await {
-                Err(err) => {
-                    eprintln!("error accepting connection: {}", err);
-                    return Err(String::from("error accepting connection"));
-                }
-                Ok(con) => {
-                    let state = app.state::<Mutex<AppState>>();
-                    let mut state = state.lock().expect("Error connecting to device");
-                    state.connected_to = Some(con);
-                }
-            };
-        }
-        Ok(())
-    });
     Ok(())
 }

@@ -3,9 +3,9 @@ import "./App.css";
 import { Route } from 'react-router';
 import Home from './pages/Home';
 import Sender from './pages/Sender';
-import Receiver from './pages/Receiver';
 import { useEffect } from 'react';
 import { setupListeners } from './listners';
+import Scan from './pages/Receiver';
 
 function App() {
   useEffect(() => {
@@ -25,7 +25,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path='/sender' element={<Sender />} />
-      <Route path="/receiver" element={<Receiver />} />
+      <Route path="/receiver" element={<Scan />} />
     </Routes>
   );
 }

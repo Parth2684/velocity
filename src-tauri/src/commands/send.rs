@@ -3,7 +3,7 @@ use std::{
     fs::File,
     io::Read,
     path::PathBuf,
-    sync::Mutex,
+    sync::Mutex, time::Instant,
 };
 
 use bincode::config;
@@ -157,6 +157,10 @@ pub async fn send_file(app: AppHandle, paths: HashSet<String>) -> Result<(), Str
         let mut buffer = [0u8; BUFFER_SIZE];
         let total = data.1.file_size;
         let mut sent: u64 = 0;
+        
+        let mut last_check = Instant::now();
+        let mut bytes_since_last = 0u64;
+    
         loop {
             let state = app.state::<Mutex<AppState>>();
             let to_cancel = match state.lock() {
@@ -195,18 +199,28 @@ pub async fn send_file(app: AppHandle, paths: HashSet<String>) -> Result<(), Str
                 String::from("Error sending file to receiver")
             })?;
             sent += n as u64;
+            bytes_since_last += n as u64;
+            
+            let elapsed = last_check.elapsed().as_secs_f64(); 
+            if elapsed > 1.0 {
+                let speed = bytes_since_last as f64 / elapsed; // bytes/sec
+                let speed_mbps: f64 = ((speed / (1024.0 * 1024.0)) * 100.0).round() / 100.0;
+                last_check = Instant::now();
+                bytes_since_last = 0;
+                let progress = (sent as f64 / total as f64) * 100.0;
+                if let Err(err) = app.emit(
+                    "progress",
+                    serde_json::json!({
+                        "path": data.0,
+                        "transferred": sent,
+                        "progress": progress,
+                        "speed": speed_mbps
+                    }),
+                ) {
+                    eprintln!("error sending progress to client: {}", err);
+                };
 
-            let progress = (sent as f64 / total as f64) * 100.0;
-            if let Err(err) = app.emit(
-                "progress",
-                serde_json::json!({
-                    "path": data.0,
-                    "transferred": sent,
-                    "progress": progress
-                }),
-            ) {
-                eprintln!("error sending progress to client: {}", err);
-            };
+            }
         }
     }
     send_stream.finish().map_err(|err| {
