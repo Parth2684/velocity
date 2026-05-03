@@ -41,6 +41,14 @@ export interface GetMetadata {
   file_size: number;
 }
 
+export interface GetProgress {
+  path: string,
+  transferred: number,
+  progress: number,
+  speed: number
+}
+
+
 export interface Metadata {
   path: string;
   name: string;
@@ -49,6 +57,9 @@ export interface Metadata {
   transferred: number;
   progress: number;
   speed: number
+  completedIn: number | null
+  startedAt: number | null
+  cancelled: boolean
 }
 
 export type StoreState = {
@@ -70,4 +81,8 @@ export type StoreAction = {
   removeConnectedTo: () => void;
   addSendTransfer: (transfers: Map<string, GetMetadata>) => void
   addReceiveTransfer: (transfers: Map<string, GetMetadata>) => void
+  updateProgress: (progress: GetProgress, transferType: TransferType) => void
+  checkCompleted: (path: string, completedIn: number, transfertype: TransferType) => void
+  cancelSend: (path: string) => Promise<void>
+  cancelReceive: (path: string) => void
 }

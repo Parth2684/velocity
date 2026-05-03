@@ -126,7 +126,7 @@ pub async fn receive_file(app: AppHandle) -> Result<(), String> {
             let to_continue = u32::from_be_bytes(size_buf);
 
             if to_continue == 0 {
-                app.emit("stopped", data.clone()).ok();
+                app.emit("receive_stop", data.0.clone()).ok();
                 break;
             }
 
@@ -157,7 +157,7 @@ pub async fn receive_file(app: AppHandle) -> Result<(), String> {
                         let progress = (received as f64 / file_size as f64) * 100.0;
 
                         app.emit(
-                            "progress",
+                            "receive_progress",
                             serde_json::json!({
                                 "path": data.0,
                                 "transferred": received,
@@ -175,7 +175,7 @@ pub async fn receive_file(app: AppHandle) -> Result<(), String> {
         }
         let completed_in = start.elapsed().as_secs_f32();
         app.emit(
-            "file_transferred",
+            "file_received",
             serde_json::json!({
                 "path": data.0,
                 "completed_in": completed_in

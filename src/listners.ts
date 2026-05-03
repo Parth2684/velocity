@@ -1,11 +1,12 @@
 import { listen } from '@tauri-apps/api/event';
 import { store } from "./stores/useStore"
-import { AvailableDevice, GetMetadata } from './stores/types';
+import { AvailableDevice, GetMetadata, GetProgress, TransferType } from './stores/types';
+
 
 
 export const setupListeners = async () => {
   const unlisteners: (() => void)[] = [];
-  const { addAvailableDevice, removeAvailableDevice, setOtp, addSendTransfer, addReceiveTransfer } = store()
+  const { addAvailableDevice, removeAvailableDevice, setOtp, addSendTransfer, addReceiveTransfer, updateProgress, cancelReceive } = store()
   const unlistenAddAvailableDevice = await listen<AvailableDevice>("add_available_device", (data) => {
     addAvailableDevice(data.payload)
   });
@@ -30,6 +31,21 @@ export const setupListeners = async () => {
     addReceiveTransfer(map.payload)
   })
   unlisteners.push(unlistenReceive)
+  
+  const unlistenSendProgress = await listen<GetProgress>("send_progress", (progress) => {
+    updateProgress(progress.payload, TransferType.Send)
+  })
+  unlisteners.push(unlistenSendProgress)
+  
+  const unlistenReceiveProgress = await listen<GetProgress>("receive_progress", (progress) => {
+    updateProgress(progress.payload, TransferType.Receive)
+  })
+  unlisteners.push(unlistenReceiveProgress)
+  
+  const unlistenCancelReceive = await listen<string>("receive_stop", (path) => {
+    cancelReceive(path.payload)
+  })
+  unlisteners.push(unlistenCancelReceive)
   
   return () => {
     unlisteners.forEach((fn) => fn())

@@ -210,7 +210,7 @@ pub async fn send_file(app: AppHandle, paths: HashSet<String>) -> Result<(), Str
                 bytes_since_last = 0;
                 let progress = (sent as f64 / total as f64) * 100.0;
                 if let Err(err) = app.emit(
-                    "progress",
+                    "send_progress",
                     serde_json::json!({
                         "path": data.0,
                         "transferred": sent,

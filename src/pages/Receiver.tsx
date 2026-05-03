@@ -45,7 +45,7 @@ export default function Scan() {
       <div key={id}> <Button onClick={() => {
         setDevice(device);
         setShowInput(true)
-      }}>{ device.fullname }</Button> </div>
+      }}>{ JSON.stringify(device) }</Button> </div>
     ))}
     {showInput ?? <div>
       <input type='text' onChange={(e) => setOtp(e.target.value)}></input>
