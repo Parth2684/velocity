@@ -24,8 +24,8 @@ function App() {
     
     <Routes>
       <Route path="/" element={<Home />} />
-      <Route path='/sender' element={<Sender />} />
-      <Route path="/receiver" element={<Scan />} />
+      <Route path='/serve' element={<Sender />} />
+      <Route path="/scan" element={<Scan />} />
     </Routes>
   );
 }

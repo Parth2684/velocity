@@ -77,10 +77,6 @@ pub fn serve_and_connect_quic(app: AppHandle) -> Result<(), String> {
                         send_stream.write_all(device_name.as_encoded_bytes()).await.expect("error sending device name to receiver");
                         send_stream.finish().ok();
                         
-                        // let mut size_buff = [0u8; 8];
-                        // if let Err(err) = recv_stream.read_exact(&mut size_buff).await {
-                        //     eprintln!("error getting receiver's name: {}", err);
-                        // }
                         let mut receiver_name = String::new();
                         if let Err(err) = recv_stream.read_to_string(&mut receiver_name).await {
                             eprintln!("error receiving receriver's name: {}", err);

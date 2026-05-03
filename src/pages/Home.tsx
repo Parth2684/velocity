@@ -1,11 +1,17 @@
 import { useNavigate } from 'react-router'
 import { Button } from '../components/ui/button'
+import { store } from '../stores/useStore'
 
 
 export default function Home() {
+  const { connectedTo } = store()
   const nav = useNavigate()
   return <div>
-    <Button onClick={() => nav("/sender")}>Send</Button>
-    <Button onClick={() => nav("/receiver")}>Receive</Button>
-  </div>
+    {!connectedTo ? <>
+      <Button onClick={() => nav("/serve")}>Serve Device</Button>
+      <Button onClick={() => nav("/scan")}>Scan Device</Button>
+    </> : <>
+      <Button onClick={() => nav("/Transfers")}>Show Transfers</Button>
+    </> }
+    </div>
 }

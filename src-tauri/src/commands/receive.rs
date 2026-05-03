@@ -61,6 +61,8 @@ pub async fn receive_file(app: AppHandle) -> Result<(), String> {
     })?;
 
     for data in metadata {
+        let start = Instant::now();
+        let mut last_update = Instant::now();
         let mut len_buff = [0u8; 8];
         recv_stream.read_exact(&mut len_buff).await.map_err(|err| {
             eprintln!("error getting file size:{}", err);
@@ -113,8 +115,6 @@ pub async fn receive_file(app: AppHandle) -> Result<(), String> {
         let file_size = data.1.file_size;
         let mut remaining = u64::from_be_bytes(len_buff);
         let mut buffer = vec![0u8; BUFFER_SIZE];
-        let start = Instant::now();
-        let mut last_update = Instant::now();
         let mut last_bytes = 0u64;
 
         while remaining > 0 {

@@ -29,17 +29,34 @@ export interface AvailableDevice {
   txt_properties: Map<string, string>
 }
 
+export enum TransferType {
+  Send,
+  Receive
+}
+
+export interface GetMetadata {
+  path: string;
+  name: string;
+  data_type: CustomMatcherType;
+  file_size: number;
+}
+
 export interface Metadata {
   path: string;
   name: string;
   data_type: CustomMatcherType;
-  file_size: number
+  file_size: number;
+  transferred: number;
+  progress: number;
+  speed: number
 }
 
 export type StoreState = {
   availableDevices: Map<string, AvailableDevice>;
-  files: Map<string, Metadata>
+  send_files: Map<string, Metadata>
+  receive_files: Map<string, Metadata>
   otp: string | null
+  connectedTo: string | null
 }
 
 export type StoreAction = {
@@ -49,4 +66,8 @@ export type StoreAction = {
   addAvailableDevice: (data: AvailableDevice) => void
   removeAvailableDevice: (name: string) => void
   setOtp: (otp: string) => void
+  addConnectedTo: (deviceName: string) => void
+  removeConnectedTo: () => void;
+  addSendTransfer: (transfers: Map<string, GetMetadata>) => void
+  addReceiveTransfer: (transfers: Map<string, GetMetadata>) => void
 }

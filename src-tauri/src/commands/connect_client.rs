@@ -7,7 +7,7 @@ use std::{
 
 use quinn::{ClientConfig, Endpoint};
 use rustls::pki_types::CertificateDer;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 use tokio::io::AsyncReadExt;
 
 use crate::AppState;
@@ -133,6 +133,7 @@ pub async fn receive_cert_and_connect_quic(
                     send.write_all(device_name.as_encoded_bytes()).await.expect("error sending your name to sender");
                     send.finish().ok();
                     con.close(0u8.into(),b"done");
+                    app.emit("connection_success", &sender_name).ok();
                     Ok(())
                 }
             }
