@@ -7,9 +7,7 @@
     "beforeDevCommand": "bun run dev",
     "devUrl": "http://localhost:1420",
     "beforeBuildCommand": "bun run build",
-    "frontendDist": "../dist",
-    "beforeBundleCommand": "strip --strip-unneeded src-tauri/target/release/Velocity",
-    "removeUnusedCommands": true
+    "frontendDist": "../dist"
   },
   "app": {
     "windows": [
