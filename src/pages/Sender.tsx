@@ -11,7 +11,7 @@ export default function Sender() {
     if (connectedTo !== null) {
       nav("/transfer")
     }
-  }, [connectedTo]);
+  }, []);
   
   useEffect(() => {
     const serveConnect = async () => {
@@ -21,7 +21,7 @@ export default function Sender() {
   }, [])
   
   if (otp == null) {
-    return <div>
+    return <div className='m-10 p-10'>
       loading
     </div>
   } else {

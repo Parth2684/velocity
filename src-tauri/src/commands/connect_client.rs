@@ -103,40 +103,43 @@ pub async fn receive_cert_and_connect_quic(
             eprintln!("error connecting with sender with quinn: {}", err);
             return Err(String::from("error connecting with sender"));
         }
-        Ok(conn) => {
-            match conn.await {
-                Err(err) => {
-                    eprintln!(
-                        "error establishing stable quinn connection with the sender: {}",
-                        err
-                    );
-                    return Err(String::from(
-                        "Error establishing stable connection with the sender",
-                    ));
-                }
-                Ok(con) => {
-                    let state = app.state::<Mutex<AppState>>();
-                    let device_name = {
-                        let mut state = match state.lock() {
-                            Err(err) => {
-                                eprintln!("error getting mutable state while establishing connection with sender: {}", err);
-                                return Err(String::from("Error getting mutable state while establishing connection with sender"));
-                            }
-                            Ok(state) => state,
-                        };
-                        state.connected_to = Some(con.clone());
-                        state.device_name.clone()
-                    };
-                    let (mut send, mut recv) = con.accept_bi().await.expect("error accepting bi stream");
-                    let mut sender_name = String::new();
-                    recv.read_to_string(&mut sender_name).await.expect("error getting sender's name");
-                    send.write_all(device_name.as_encoded_bytes()).await.expect("error sending your name to sender");
-                    send.finish().ok();
-                    con.close(0u8.into(),b"done");
-                    app.emit("connection_success", &sender_name).ok();
-                    Ok(())
-                }
+        Ok(conn) => match conn.await {
+            Err(err) => {
+                eprintln!(
+                    "error establishing stable quinn connection with the sender: {}",
+                    err
+                );
+                return Err(String::from(
+                    "Error establishing stable connection with the sender",
+                ));
             }
-        }
+            Ok(con) => {
+                let state = app.state::<Mutex<AppState>>();
+                let device_name = {
+                    let mut state = match state.lock() {
+                        Err(err) => {
+                            eprintln!("error getting mutable state while establishing connection with sender: {}", err);
+                            return Err(String::from("Error getting mutable state while establishing connection with sender"));
+                        }
+                        Ok(state) => state,
+                    };
+                    state.connected_to = Some(con.clone());
+                    state.device_name.clone()
+                };
+                let (mut send, mut recv) =
+                    con.accept_bi().await.expect("error accepting bi stream");
+                let mut sender_name = String::new();
+                recv.read_to_string(&mut sender_name)
+                    .await
+                    .expect("error getting sender's name");
+                send.write_all(device_name.as_encoded_bytes())
+                    .await
+                    .expect("error sending your name to sender");
+                send.finish().ok();
+                con.close(0u8.into(), b"done");
+                app.emit("connection_success", &sender_name).ok();
+                Ok(())
+            }
+        },
     }
 }

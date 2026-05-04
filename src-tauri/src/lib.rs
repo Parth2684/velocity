@@ -83,6 +83,9 @@ struct AppState {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    std::panic::set_hook(Box::new(|panic_info| {
+            println!("PANIC: {:?}", panic_info);
+        }));
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())

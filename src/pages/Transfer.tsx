@@ -12,7 +12,7 @@ export default function Transfer() {
       nav("/")
     }
   }, [connectedTo])
-  return <div>
+  return <div className='m-5 p-5'>
     <Button onClick={async () => {
       const files = await open({
         multiple: true,
