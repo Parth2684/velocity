@@ -1,4 +1,4 @@
-pkgname=Velocity
+pkgname=velocity
 pkgver=0.1.0
 pkgrel=1
 pkgdesc="Fastest File / Folder Sharing App"
@@ -10,10 +10,14 @@ depends=(
   'libappindicator'
 )
 
-source=("velocity::file://$(pwd)/src-tauri/target/release/Velocity")
+options=(!debug)
 
-sha256sums=('SKIP')
+source=("Velocity::file://$(pwd)/src-tauri/target/release/Velocity" "velocity.desktop")
+
+sha256sums=('SKIP' 'SKIP')
 
 package() {
-    install -Dm755 "$srcdir/velocity" "$pkgdir/usr/bin/velocity"
+    install -Dm755 "$srcdir/Velocity" "$pkgdir/usr/bin/velocity"
+    install -Dm644 "$srcdir/velocity.desktop" \
+            "$pkgdir/usr/share/applications/velocity.desktop"
 }

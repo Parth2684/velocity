@@ -3,7 +3,7 @@ import { store } from '../stores/useStore';
 import { AvailableDevice, Discovery } from '../stores/types';
 import { Button } from '../components/ui/button';
 import { listen } from '@tauri-apps/api/event';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 
 export default function Scan() {
   const { scan, availableDevices, receiveCertAndConnectQuic, addConnectedTo, connectedTo } = store()

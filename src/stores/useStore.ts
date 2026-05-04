@@ -53,6 +53,7 @@ export const store = create<StoreState & StoreAction>((set, get) => ({
     set({ otp });
   },
   addConnectedTo: (deviceName) => {
+    invoke("receive_file")
     set({ connectedTo: deviceName });
   },
   removeConnectedTo: () => {
@@ -168,5 +169,14 @@ export const store = create<StoreState & StoreAction>((set, get) => ({
     const receivingFiles = new Map(get().receive_files)
     receivingFiles.delete(path)
     set({ receive_files: receivingFiles })
+  },
+  send: async (paths) => {
+    try {
+      await invoke("send_file", {
+        paths
+      })
+    } catch (err) {
+      console.error("error sending files: " + err)
+    }
   }
 }));

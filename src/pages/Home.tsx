@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '../components/ui/button'
 import { store } from '../stores/useStore'
 
@@ -7,11 +7,11 @@ export default function Home() {
   const { connectedTo } = store()
   const nav = useNavigate()
   return <div>
-    {!connectedTo ? <>
-      <Button onClick={() => nav("/serve")}>Serve Device</Button>
-      <Button onClick={() => nav("/scan")}>Scan Device</Button>
+    {(connectedTo === null) ? <>
+      <Button variant="default" onClick={() => nav("/serve")}>Serve Device</Button>
+      <Button variant="default" onClick={() => nav("/scan")}>Scan Device</Button>
     </> : <>
-      <Button onClick={() => nav("/Transfers")}>Show Transfers</Button>
+      <Button variant="default" onClick={() => nav("/transfer")}>Transfers</Button>
     </> }
     </div>
 }

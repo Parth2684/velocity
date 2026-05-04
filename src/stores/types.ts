@@ -85,4 +85,5 @@ export type StoreAction = {
   checkCompleted: (path: string, completedIn: number, transfertype: TransferType) => void
   cancelSend: (path: string) => Promise<void>
   cancelReceive: (path: string) => void
+  send: (paths: string[]) => Promise<void>
 }

@@ -237,6 +237,5 @@ pub async fn send_file(app: AppHandle, paths: HashSet<String>) -> Result<(), Str
         eprintln!("error closing stream:{}", err);
         String::from("Error Closing Send Stream")
     })?;
-    connection.closed().await;
     Ok(())
 }

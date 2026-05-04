@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Velocity
+Exec=velocity
+Icon=velocity
+Type=Application
+Categories=Utility;
+Terminal=false
