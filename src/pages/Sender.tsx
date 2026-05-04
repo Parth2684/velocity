@@ -4,8 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 
 export default function Sender() {
-  const { serveAndConnectQuic, otp, connectedTo } = store()
-  
+  const { otp, connectedTo, serveAndConnectQuic } = store()
   const nav = useNavigate();
   
   useEffect(() => {
@@ -26,7 +25,7 @@ export default function Sender() {
       loading
     </div>
   } else {
-    <div>
+    return <div className='m-10 p-10 text-black'>
       {otp}
     </div>
   }

@@ -6,7 +6,7 @@ import { listen } from '@tauri-apps/api/event';
 import { useNavigate } from 'react-router-dom';
 
 export default function Scan() {
-  const { scan, availableDevices, receiveCertAndConnectQuic, addConnectedTo, connectedTo } = store()
+  const { scan, availableDevices, receiveCertAndConnectQuic, addConnectedTo, connectedTo } = store.getState()
   const [device, setDevice] = useState<AvailableDevice>()
   const [showInput, setShowInput] = useState(false);
   const [otp, setOtp] = useState<string>("");

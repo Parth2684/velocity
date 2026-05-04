@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button';
 import { open } from '@tauri-apps/plugin-dialog';
 
 export default function Transfer() {
-  const { connectedTo, send_files, receive_files, send } = store()
+  const { connectedTo, send_files, receive_files, send } = store.getState()
   const nav = useNavigate()
   useEffect(() => {
     if (connectedTo == null) {

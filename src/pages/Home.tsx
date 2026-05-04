@@ -4,7 +4,7 @@ import { store } from '../stores/useStore'
 
 
 export default function Home() {
-  const { connectedTo } = store()
+  const { connectedTo } = store.getState()
   const nav = useNavigate()
   return <div>
     {(connectedTo === null) ? <>

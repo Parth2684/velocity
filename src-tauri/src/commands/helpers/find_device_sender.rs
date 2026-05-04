@@ -61,7 +61,7 @@ pub fn send_publish(
             let addr = SocketAddr::new(tcp_ip, 0);
             let otp = Uuid::new_v4().to_string()[0..4].to_string();
             let otp_clone = otp.clone();
-
+            println!("{}", &otp);
             thread::spawn(move || {
                 let listner =
                     TcpListener::bind(addr).expect("listner failed: could not share certificate");

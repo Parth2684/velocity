@@ -6,7 +6,7 @@ import { AvailableDevice, GetMetadata, GetProgress, TransferType } from './store
 
 export const setupListeners = async () => {
   const unlisteners: (() => void)[] = [];
-  const { addAvailableDevice, removeAvailableDevice, setOtp, addSendTransfer, addReceiveTransfer, updateProgress, cancelReceive } = store()
+  const { addAvailableDevice, removeAvailableDevice, setOtp, addSendTransfer, addReceiveTransfer, updateProgress, cancelReceive } = store.getState()
   const unlistenAddAvailableDevice = await listen<AvailableDevice>("add_available_device", (data) => {
     addAvailableDevice(data.payload)
   });
@@ -18,6 +18,7 @@ export const setupListeners = async () => {
   unlisteners.push(unlistenRemoveAvailableDevice)
   
   const unlistenOtp = await listen<string>("connect_otp", (otp) => {
+    console.log("otp is: " + otp.payload)
     setOtp(otp.payload)
   })
   unlisteners.push(unlistenOtp)
