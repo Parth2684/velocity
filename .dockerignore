@@ -5,3 +5,12 @@ node_modules
 pkg
 velocity*
 .gitignore
+target
+/gen/schemas
+.git
+.gitignore
+*.log
+*.tmp
+*.swp
+.DS_Store
+src-tauri/target
