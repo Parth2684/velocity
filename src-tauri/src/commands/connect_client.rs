@@ -137,7 +137,13 @@ pub async fn receive_cert_and_connect_quic(
                     .expect("error sending your name to sender");
                 send.finish().ok();
                 con.close(0u8.into(), b"done");
-                app.emit("connection_success", &sender_name).ok();
+
+                let emit_app = app.clone();
+                tauri::async_runtime::spawn(async move {
+                    if let Err(err) = emit_app.emit("connection_success", sender_name) {
+                        eprintln!("error sending to frontend sender name: {}", err);
+                    }
+                });
                 Ok(())
             }
         },

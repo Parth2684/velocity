@@ -7,15 +7,15 @@ use crate::{AppState, AvailableDevice, Discovery};
 
 pub fn recv_search(app: &tauri::AppHandle) -> Result<(), String> {
     let state = app.state::<Mutex<AppState>>();
-    let state = match state.lock() {
+    let mdns = match state.lock() {
         Err(err) => {
             eprintln!("error getting mutable state: {:?}", err);
             return Err(String::from("error getting mutable state"));
         }
-        Ok(state) => state,
+        Ok(state) => state.mdns.clone(),
     };
 
-    let receiver = state.mdns.browse("_velocity._udp.local.");
+    let receiver = mdns.browse("_velocity._udp.local.");
     match receiver {
         Err(err) => return Err(err.to_string()),
         Ok(recv) => {

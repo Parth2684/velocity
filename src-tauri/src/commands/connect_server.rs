@@ -13,17 +13,17 @@ use crate::{commands::helpers::find_device_sender::send_publish, AppState, Disco
 #[tauri::command]
 pub fn serve_and_connect_quic(app: AppHandle) -> Result<(), String> {
     let state = app.state::<Mutex<AppState>>();
-    let state = match state.lock() {
+    let (certificate, key, ip) = match state.lock() {
         Err(err) => {
             eprintln!("error getting state: {}", err);
             return Err(String::from("error getting application state"));
         }
-        Ok(state) => state,
+        Ok(state) => (state.certificate.clone(), state.key.clone_key(), state.socket_addr.clone()),
     };
 
     let mut server_config = match ServerConfig::with_single_cert(
-        vec![state.certificate.clone()],
-        state.key.clone_key(),
+        vec![certificate],
+        key,
     ) {
         Err(err) => {
             eprintln!("error loading server config certificate: {}", err);
@@ -42,9 +42,9 @@ pub fn serve_and_connect_quic(app: AppHandle) -> Result<(), String> {
     };
 
     transport_config.max_concurrent_uni_streams(100_u32.into());
-    // transport_config.max_concurrent_bidi_streams(100_u32.into());
-    let ip = state.socket_addr.ip();
-    let socket_addr = SocketAddr::new(ip, 0);
+    transport_config.max_concurrent_bidi_streams(100_u32.into());
+    // let ip = state.socket_addr.ip();
+    let socket_addr = SocketAddr::new(ip.ip(), 0);
     let endpoint = match Endpoint::server(server_config, socket_addr) {
         Err(err) => {
             eprintln!("error making endpoint for quic: {}", err);
@@ -83,8 +83,12 @@ pub fn serve_and_connect_quic(app: AppHandle) -> Result<(), String> {
                             eprintln!("error receiving receriver's name: {}", err);
                         }
                         con.closed().await;
-                        
-                        app.emit("connection_success", &receiver_name).ok();
+                        let emit_app = app.clone();
+                        tauri::async_runtime::spawn(async move {
+                            if let Err(e) = emit_app.emit("connection_success", &receiver_name) {
+                                eprintln!("emit error: {}", e);
+                            }
+                        });
                     }
                 }
             });

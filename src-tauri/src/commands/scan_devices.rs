@@ -7,7 +7,7 @@ use crate::{commands::helpers::find_device_receiver, AppState, Discovery};
 #[tauri::command]
 pub fn scan(app: tauri::AppHandle, discovery: Discovery) -> Result<(), String> {
     let state_handle = app.state::<Mutex<AppState>>();
-    let mut state = match state_handle.lock() {
+    match state_handle.lock() {
         Err(err) => {
             eprintln!(
                 "error getting mutable state for changing discovery mode: {}",
@@ -17,10 +17,10 @@ pub fn scan(app: tauri::AppHandle, discovery: Discovery) -> Result<(), String> {
                 "Error getting mutable state for changing discovery mode",
             ));
         }
-        Ok(state) => state,
+        Ok(mut state) => state.discovery = discovery,
     };
-    state.discovery = discovery;
-    match find_device_receiver::recv_search(&app) {
+
+    match find_device_receiver::recv_search(&app.clone()) {
         Err(err) => {
             let err_state = String::from("couldn't connect with the sender");
             eprintln!("{:?}: {:?}", &err_state, &err);
