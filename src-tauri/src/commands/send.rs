@@ -90,6 +90,7 @@ pub async fn send_file(app: AppHandle, paths: HashSet<String>) -> Result<(), Str
         eprintln!("error sending metadata to client: {}", err);
         String::from("Error sending metadata to client")
     })?;
+    
     let connection_clone = {
         let state = app.state::<Mutex<AppState>>();
         let mut state = match state.lock() {

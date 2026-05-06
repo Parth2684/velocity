@@ -52,7 +52,8 @@ pub fn serve_and_connect_quic(app: AppHandle) -> Result<(), String> {
         }
         Ok(endpont) => endpont,
     };
-
+    
+    drop(state);
     let app = app.clone();
     let app2 = app.clone();
 
