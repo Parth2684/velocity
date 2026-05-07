@@ -117,6 +117,10 @@ pub fn run() {
                 .path()
                 .app_local_data_dir()
                 .expect("local data dir not accessible");
+
+            if !local_data_dir.exists(){
+                fs::create_dir_all(&local_data_dir).expect("error creating local data dir");
+            }
             
             let transfer_dir = app.path().home_dir().expect("Could not find home dir").join("Velocity");
             
